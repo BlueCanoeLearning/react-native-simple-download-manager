@@ -12,6 +12,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 
 import java.util.HashMap;
+import java.io.File;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 
@@ -48,12 +49,12 @@ public class Downloader {
 
         
 
-        if(external){
+        if (external) {
+            File destPath = new File(external_path);
+            destPath.mkdirs();
             request.setDestinationInExternalPublicDir(external_path, saveAsName);
-
-        }else{
+        } else {
             request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, saveAsName);
-
         }
 
         request.setTitle(downloadTitle);

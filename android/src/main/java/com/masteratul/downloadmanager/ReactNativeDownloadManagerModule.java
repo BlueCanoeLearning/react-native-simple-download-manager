@@ -14,9 +14,11 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule {
     private Downloader downloader;
@@ -64,7 +66,7 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
             long downloadId = downloader.queueDownload(request);
             appDownloads.put(downloadId, onDone);
         } catch (Exception e) {
-            onDone.invoke(e.getMessage(), null);
+            onDone.invoke(this.createResponse("", e.getMessage(), "STATUS_FAILED"), null);
         }
     }
 
@@ -73,9 +75,10 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
         try {
             DownloadManager.Request request = downloader.createRequest(url, headers, config);
             long downloadId = downloader.queueDownload(request);
-            onStart.invoke(null, String.valueOf(downloadId));
+            WritableMap result = downloader.checkDownloadStatus(downloadId);
+            onStart.invoke(null, result);
         } catch (Exception e) {
-            onStart.invoke(e.getMessage(), null);
+            onStart.invoke(this.createResponse("", e.getMessage(), "STATUS_FAILED"), null);
         }
     }
 
@@ -115,6 +118,14 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
         } catch (Exception e) {
             onStatus.invoke(e.getMessage(), null);
         }
+    }
+
+    private WritableMap createResponse(String downloadId, String reason, String status) {
+        WritableMap wmap = new WritableNativeMap();
+        wmap.putString("downloadId", downloadId);
+        wmap.putString("reason", reason);
+        wmap.putString("status", status);
+        return wmap;
     }
 
 }
