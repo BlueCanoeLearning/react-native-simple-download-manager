@@ -15,6 +15,10 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.bridge.Promise;
+
+import java.io.File;
+import java.io.FilenameFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +100,40 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
             }
         } catch (Exception e) {
             onComplete.invoke(e.getMessage(), null);
+        }
+    }
+
+    @ReactMethod
+    public void hasDownloadedExpansionFile(final String expansionVersion, final Promise promise) {
+        try {
+            File obbDir = this.getReactApplicationContext().getObbDir();
+            String obbPath = obbDir.getAbsolutePath();
+            // Log.i(TAG, "Obb Directory: " + obbPath);
+            File[] expansionFiles = obbDir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.toLowerCase().startsWith("main." + expansionVersion) && name.toLowerCase().endsWith(".obb");
+                }
+            });
+
+            if (expansionFiles == null) {
+                promise.reject("NULL_EXPANSION_FILES", "obbDir.listFiles() returned null");
+                return;
+            }
+
+            switch (expansionFiles.length) {
+            case 0:
+                promise.resolve(false);
+                break;
+            case 1:
+                promise.resolve(true);
+                break;
+            default:
+                promise.reject("MULTIPLE_EXPANSION_FILES", "More than one expansion file found. This should never happen.");
+                break;
+            }
+        } catch (Exception ex) {
+            promise.reject(ex);
         }
     }
 

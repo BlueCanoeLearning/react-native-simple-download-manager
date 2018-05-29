@@ -22,5 +22,6 @@ declare module "react-native-simple-download-manager" {
     export const attachOnCompleteListener: (downloadId: string) => Promise<ResponseStatus>;
     export const cancel: (downloadId: string) => Promise<ResponseStatus>;
     export const checkStatus: (downloadId: string) => Promise<ResponseStatus>;
+    export const hasDownloadedExpansionFile: (expansionVersion?: string) => Promise<boolean>;
 }
 

@@ -64,6 +64,10 @@ const checkStatus = (downloadId = '') => new Promise((resolve, reject) => {
   });
 });
 
+const hasDownloadedExpansionFile = (expansionVersion = '') => {
+  return ReactNativeDownloadManager.hasDownloadedExpansionFile(expansionVersion);
+}
+
 module.exports = {
   download,
   queueDownload,
