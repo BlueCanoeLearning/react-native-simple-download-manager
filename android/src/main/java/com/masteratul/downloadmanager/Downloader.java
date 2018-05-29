@@ -11,7 +11,6 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 
-import java.util.HashMap;
 import java.io.File;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -47,8 +46,6 @@ public class Downloader {
             request.addRequestHeader(key, headers.getString(key));
         }
 
-        
-
         if (external) {
             File destPath = new File(external_path);
             destPath.mkdirs();
@@ -76,19 +73,15 @@ public class Downloader {
         DownloadManager.Query downloadQuery = new DownloadManager.Query();
         downloadQuery.setFilterById(downloadId);
         Cursor cursor = downloadManager.query(downloadQuery);
-        HashMap<String, String> result = new HashMap<>();
         if (cursor.moveToFirst()) {
-            result = getDownloadStatus(cursor, downloadId);
+            return getDownloadStatus(cursor, downloadId);
         } else {
-            result.put("status", "UNKNOWN");
-            result.put("reason", "COULD_NOT_FIND");
-            result.put("downloadId", String.valueOf(downloadId));
+            WritableMap result = new WritableNativeMap();
+            result.putString("downloadId", String.valueOf(downloadId));
+            result.putString("reason", "COULD_NOT_FIND");
+            result.putString("status", "UNKNOWN");
+            return result;
         }
-        WritableMap wmap = new WritableNativeMap();
-        for (HashMap.Entry<String, String> entry : result.entrySet()) {
-            wmap.putString(entry.getKey(), entry.getValue());
-        }
-        return wmap;
     }
 
     public int cancelDownload(long downloadId) {
@@ -96,7 +89,7 @@ public class Downloader {
     }
 
 
-    private HashMap<String, String> getDownloadStatus(Cursor cursor, long downloadId) {
+    private WritableMap getDownloadStatus(Cursor cursor, long downloadId) {
 
         int columnStatusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
         int STATUS = cursor.getInt(columnStatusIndex);
@@ -176,10 +169,10 @@ public class Downloader {
                 break;
         }
 
-        HashMap<String, String> result = new HashMap<>();
-        result.put("status", statusText);
-        result.put("reason", reasonText);
-        result.put("downloadId", String.valueOf(downloadId));
+        WritableMap result = new WritableNativeMap();
+        result.putString("downloadId", String.valueOf(downloadId));
+        result.putString("reason", reasonText);
+        result.putString("status", statusText);
         return result;
     }
 }
