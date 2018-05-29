@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule {
+    private static final String TAG = "simple-download-manager";
+
     private Downloader downloader;
     private LongSparseArray<Callback> appDownloads;
     BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
