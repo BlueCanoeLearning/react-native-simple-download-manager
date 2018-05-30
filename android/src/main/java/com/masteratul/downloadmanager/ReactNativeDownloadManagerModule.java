@@ -16,6 +16,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,26 +30,33 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
 
     private Downloader downloader;
     private LongSparseArray<Callback> appDownloads;
+    private long currentDownloadId = 0;
+
     BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            try {
-                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                if (appDownloads.indexOfKey(downloadId) >= 0) {
-                    WritableMap downloadStatus = downloader.checkDownloadStatus(downloadId);
-                    Callback downloadOnDoneCb = appDownloads.get(downloadId);
-
-                    if (downloadStatus.getString("status").equalsIgnoreCase("STATUS_SUCCESSFUL")) {
-                        downloadOnDoneCb.invoke(null, downloadStatus);
-                    } else {
-                        downloadOnDoneCb.invoke(downloadStatus, null);
-                    }
-                    appDownloads.remove(downloadId);
-                }
-
-            } catch (Exception e) {
-                Log.e("RN_DOWNLOAD_MANAGER", Log.getStackTraceString(e));
+            if (currentDownloadId != 0) {
+                WritableMap downloadStatus = downloader.checkDownloadStatus(currentDownloadId);
+                sendUpdate(getReactApplicationContext(), "expansion-dl-status", downloadStatus);
             }
+
+            // try {
+            //     long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            //     if (appDownloads.indexOfKey(downloadId) >= 0) {
+            //         WritableMap downloadStatus = downloader.checkDownloadStatus(downloadId);
+            //         Callback downloadOnDoneCb = appDownloads.get(downloadId);
+
+            //         if (downloadStatus.getString("status").equalsIgnoreCase("STATUS_SUCCESSFUL")) {
+            //             downloadOnDoneCb.invoke(null, downloadStatus);
+            //         } else {
+            //             downloadOnDoneCb.invoke(downloadStatus, null);
+            //         }
+            //         appDownloads.remove(downloadId);
+            //     }
+
+            // } catch (Exception e) {
+            //     Log.e("RN_DOWNLOAD_MANAGER", Log.getStackTraceString(e));
+            // }
         }
     };
 
@@ -81,6 +89,7 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
         try {
             DownloadManager.Request request = downloader.createRequest(url, headers, config);
             long downloadId = downloader.queueDownload(request);
+            currentDownloadId = downloadId;
             WritableMap result = downloader.checkDownloadStatus(downloadId);
             onStart.invoke(null, result);
         } catch (Exception e) {
@@ -166,6 +175,10 @@ public class ReactNativeDownloadManagerModule extends ReactContextBaseJavaModule
         wmap.putString("reason", reason);
         wmap.putString("status", status);
         return wmap;
+    }
+
+    private void sendUpdate(ReactApplicationContext reactContext, String eventName, WritableMap params) {
+        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, params);
     }
 
 }
